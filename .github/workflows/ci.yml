@@ -22,4 +22,15 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-backend:${{ github.sha }}
+
+      - name: Update Kubernetes manifests
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/Gitops-prasad/gitops-manifests.git
+          cd gitops-manifests
+          sed -i "s|image: .*gitops-backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-backend:${{ github.sha }}|g" backend.yaml
+          git add backend.yaml
+          git commit -m "Update backend image to ${{ github.sha }}"
+          git push
